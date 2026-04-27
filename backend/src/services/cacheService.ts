@@ -58,13 +58,15 @@ export const TTL = {
   DEPARTMENT_TREE:   24 * 60 * 60,   // 24 hours
   TEMPLATE_MATRIX:   24 * 60 * 60,   // 24 hours
   GLOBAL_MATRIX:     24 * 60 * 60,   // 24 hours
+  DASHBOARD_STATS:   5  * 60,        // 5 minutes (SSE invalidates on change)
 } as const;
 
 // Key builders
 export const CacheKeys = {
-  userProfile:      (id: string) => `user:${id}:profile`,
-  departmentTree:   (id: string) => `org:department:${id}:tree`,
-  templateMatrix:   (id: string) => `matrix:template:${id}`,
-  globalMatrix:     ()           => `matrix:global`,
+  userProfile:      (id: string)     => `user:${id}:profile`,
+  departmentTree:   (id: string)     => `org:department:${id}:tree`,
+  templateMatrix:   (id: string)     => `matrix:template:${id}`,
+  globalMatrix:     ()               => `matrix:global`,
   approversList:    (deptId: string) => `approvers:department:${deptId}`,
+  dashboardStats:   (userId: string) => `dashboard:stats:${userId}`,
 };

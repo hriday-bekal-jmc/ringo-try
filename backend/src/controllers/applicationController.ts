@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { query, pool } from '../config/db';
 import { WorkflowEngine, ApproverStep } from '../services/workflowEngine';
+import { sseManager } from '../services/sseService';
+import { CacheService, CacheKeys } from '../services/cacheService';
 import { z } from 'zod';
 
 const CreateApplicationSchema = z.object({
@@ -73,7 +75,12 @@ export const ApplicationController = {
           [applicationId]
         );
         await WorkflowEngine.logAudit(applicationId, applicantId, 'SUBMIT', { templateId });
+        await notifyOnSubmit(applicationId, applicantId);
       }
+
+      // Applicant's draft count changed regardless
+      await CacheService.del(CacheKeys.dashboardStats(applicantId));
+      sseManager.send(applicantId, { type: 'stats_update' });
 
       res.status(201).json({ id: applicationId, application_number });
     } catch (err) {
@@ -114,6 +121,10 @@ export const ApplicationController = {
 
     await WorkflowEngine.createApprovalSteps(id, approvers as ApproverStep[]);
     await WorkflowEngine.logAudit(id, userId, 'SUBMIT', {});
+
+    await notifyOnSubmit(id, userId);
+    await CacheService.del(CacheKeys.dashboardStats(userId));
+    sseManager.send(userId, { type: 'stats_update' });
 
     res.json({ message: 'Application submitted successfully.' });
   },
@@ -261,6 +272,10 @@ export const ApplicationController = {
     await WorkflowEngine.resetApprovalChain(id);
     await WorkflowEngine.logAudit(id, userId, 'RESUBMIT', {});
 
+    await notifyOnSubmit(id, userId);
+    await CacheService.del(CacheKeys.dashboardStats(userId));
+    sseManager.send(userId, { type: 'stats_update' });
+
     res.json({ message: 'Application resubmitted successfully.' });
   },
 
@@ -268,7 +283,7 @@ export const ApplicationController = {
   async getApprovers(req: Request, res: Response): Promise<void> {
     const { search, departmentId } = req.query;
     const params: unknown[] = [];
-    const conditions = ["u.role IN ('MANAGER', 'GM', 'PRESIDENT') AND u.is_active = true"];
+    const conditions = ["u.role IN ('MANAGER', 'GM', 'PRESIDENT', 'ADMIN') AND u.is_active = true"];
 
     if (search && String(search).length >= 2) {
       params.push(search);
@@ -293,3 +308,23 @@ export const ApplicationController = {
     res.json(result.rows);
   },
 };
+
+// Notify the first pending approver after any submit / resubmit
+async function notifyOnSubmit(applicationId: string, applicantId: string): Promise<void> {
+  const row = await query<{ approver_id: string }>(
+    `SELECT approver_id FROM approval_steps
+     WHERE application_id = $1 AND status = 'PENDING'
+     ORDER BY step_order ASC LIMIT 1`,
+    [applicationId]
+  );
+  const firstApproverId = row.rows[0]?.approver_id;
+  if (firstApproverId) {
+    await CacheService.del(CacheKeys.dashboardStats(firstApproverId));
+    sseManager.send(firstApproverId, { type: 'inbox_update' });
+    sseManager.send(firstApproverId, { type: 'stats_update' });
+  }
+  // If the applicant and approver are different, applicant's application list changed too
+  if (firstApproverId !== applicantId) {
+    sseManager.send(applicantId, { type: 'application_update', data: { applicationId } });
+  }
+}

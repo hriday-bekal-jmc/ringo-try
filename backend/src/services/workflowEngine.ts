@@ -31,22 +31,32 @@ export const WorkflowEngine = {
 
   /**
    * Creates approval_steps for a newly submitted application.
-   * Only the first step (lowest step_order) starts as PENDING.
-   * All subsequent steps are WAITING — they activate one at a time as each step is approved.
+   * Resolves all delegations in parallel then bulk-inserts in one round-trip.
+   * Only step_order=min starts as PENDING; all others start as WAITING.
    */
   async createApprovalSteps(applicationId: string, steps: ApproverStep[]): Promise<void> {
     const sorted = [...steps].sort((a, b) => a.stepOrder - b.stepOrder);
 
-    for (let i = 0; i < sorted.length; i++) {
-      const step = sorted[i];
-      const resolvedApproverId = await this.resolveApprover(step.approverId);
-      const status = i === 0 ? 'PENDING' : 'WAITING';
-      await query(
-        `INSERT INTO approval_steps (application_id, step_order, approver_id, status)
-         VALUES ($1, $2, $3, $4)`,
-        [applicationId, step.stepOrder, resolvedApproverId, status]
-      );
-    }
+    // Resolve delegations in parallel instead of sequentially
+    const resolved = await Promise.all(
+      sorted.map(async (step, i) => ({
+        stepOrder:  step.stepOrder,
+        approverId: await this.resolveApprover(step.approverId),
+        status:     i === 0 ? 'PENDING' : 'WAITING',
+      }))
+    );
+
+    // Single bulk INSERT via unnest — one DB round-trip regardless of step count
+    await query(
+      `INSERT INTO approval_steps (application_id, step_order, approver_id, status)
+       SELECT $1, unnest($2::int[]), unnest($3::uuid[]), unnest($4::text[])`,
+      [
+        applicationId,
+        resolved.map((r) => r.stepOrder),
+        resolved.map((r) => r.approverId),
+        resolved.map((r) => r.status),
+      ]
+    );
 
     await query(
       `UPDATE applications SET status = 'PENDING_APPROVAL', updated_at = NOW() WHERE id = $1`,

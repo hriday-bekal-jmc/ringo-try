@@ -106,7 +106,7 @@ export function useDashboardStats() {
       const { data } = await apiClient.get<DashboardStats>('/api/dashboard/stats');
       return data;
     },
-    refetchInterval: 60_000,
+    staleTime: 5 * 60 * 1000, // SSE invalidates on change; long stale time avoids redundant fetches
   });
 }
 
@@ -281,7 +281,7 @@ export function useApprovalInbox() {
       const { data } = await apiClient.get<InboxItem[]>('/api/applications/approvals/inbox');
       return data;
     },
-    refetchInterval: 60_000,
+    staleTime: 5 * 60 * 1000, // SSE invalidates on every inbox change
   });
 }
 

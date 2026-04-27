@@ -15,6 +15,7 @@ import applicationRoutes from './routes/applicationRoutes';
 import settlementRoutes from './routes/settlementRoutes';
 import adminRoutes from './routes/adminRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
+import eventsRoutes from './routes/eventsRoutes';
 
 const app = express();
 
@@ -83,6 +84,7 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/settlements', settlementRoutes);
 app.use('/api/admin',       adminRoutes);
 app.use('/api/dashboard',   dashboardRoutes);
+app.use('/api/events',      eventsRoutes);
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));

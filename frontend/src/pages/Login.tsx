@@ -18,7 +18,7 @@ export default function Login() {
     setLoading(true);
     try {
       await apiClient.post('/api/auth/login', { email, password });
-      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+      await queryClient.refetchQueries({ queryKey: ['auth', 'me'] });
       navigate('/');
     } catch {
       setError('メールアドレスまたはパスワードが正しくありません。');

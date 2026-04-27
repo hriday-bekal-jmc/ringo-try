@@ -5,7 +5,8 @@
       "PowerShell(& \"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -d ringo -f \"C:\\\\Users\\\\h-bekal\\\\Videos\\\\Ringo\\\\backend\\\\migrations\\\\002_form_templates.sql\")",
       "Bash(npm uninstall *)",
       "Bash(npm audit *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(node -e \"require\\('argon2'\\); console.log\\('ok'\\)\")"
     ]
   }
 }

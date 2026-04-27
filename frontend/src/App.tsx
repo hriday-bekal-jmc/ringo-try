@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Sidebar from './components/common/Sidebar';
+import { useRealtimeSync } from './hooks/useRealtimeSync';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Application from './pages/Application';
@@ -8,8 +9,10 @@ import ApplicationDetail from './pages/ApplicationDetail';
 import MyApplications from './pages/MyApplications';
 import ApprovalInbox from './pages/ApprovalInbox';
 import Accounting from './pages/Accounting';
+import Admin from './pages/Admin';
 
 function AppShell() {
+  useRealtimeSync(); // single SSE connection for the entire authenticated session
   return (
     <div className="flex min-h-screen bg-warm-100">
       <Sidebar />
@@ -56,6 +59,10 @@ export default function App() {
 
       <Route element={<ProtectedRoute roles={['ACCOUNTING', 'ADMIN']} />}>
         <Route path="/accounting" element={<Accounting />} />
+      </Route>
+
+      <Route element={<ProtectedRoute roles={['ADMIN']} />}>
+        <Route path="/admin" element={<Admin />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
