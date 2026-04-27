@@ -63,7 +63,7 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   const { data: inbox } = useApprovalInbox();
 
-  const pendingCount = inbox?.length ?? 0;
+  const pendingCount = inbox?.filter((i) => i.step_status === 'PENDING').length ?? 0;
   const canSeeInbox = user && ['MANAGER', 'GM', 'PRESIDENT', 'ADMIN'].includes(user.role);
 
   const visible = NAV.filter((n) => !n.roles || (user && n.roles.includes(user.role)));

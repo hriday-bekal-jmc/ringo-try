@@ -335,4 +335,10 @@ export function useTriggerExport() {
 export function useExportStatus() {
   return useQuery<{ ready: boolean; fileName?: string; rows?: number }>({
     queryKey: ['settlements', 'export-status'],
-    queryFn: async 
+    queryFn: async () => {
+      const { data } = await apiClient.get('/api/settlements/export/status');
+      return data as { ready: boolean; fileName?: string; rows?: number };
+    },
+    refetchInterval: (query) => (query.state.data?.ready ? false : 10_000),
+  });
+}

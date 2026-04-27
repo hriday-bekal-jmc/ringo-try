@@ -9,7 +9,7 @@ const ActionSchema = z.object({
 });
 
 export const ApprovalController = {
-  /** Returns all applications currently awaiting this user's approval. */
+  /** Returns PENDING + RETURNED approval steps for the current user. */
   async inbox(req: Request, res: Response): Promise<void> {
     const { userId } = req.user!;
 
@@ -18,13 +18,14 @@ export const ApprovalController = {
          a.id, a.application_number, a.status, a.created_at,
          ft.title AS template_title,
          u.full_name AS applicant_name,
-         s.step_order, s.created_at AS step_created_at
+         s.step_order, s.created_at AS step_created_at,
+         s.status AS step_status
        FROM approval_steps s
        JOIN applications a ON a.id = s.application_id
        JOIN form_templates ft ON ft.id = a.template_id
        JOIN users u ON u.id = a.applicant_id
-       WHERE s.approver_id = $1 AND s.status = 'PENDING'
-       ORDER BY s.created_at ASC`,
+       WHERE s.approver_id = $1 AND s.status IN ('PENDING', 'RETURNED')
+       ORDER BY s.status ASC, s.created_at ASC`,
       [userId]
     );
 
