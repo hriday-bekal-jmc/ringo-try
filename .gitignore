@@ -1,0 +1,8 @@
+# ── エディタとローカル設定 ──
+.claude/
+.vscode/
+.idea/
+
+# ── OSのシステムファイル ──
+.DS_Store
+Thumbs.db

@@ -1,0 +1,15 @@
+# ── 依存関係 ──
+node_modules/
+
+# ── ビルド出力 ──
+dist/
+
+# ── 環境変数と機密情報 ──
+.env
+.env.local
+secrets/
+gdrive-service-account.json
+
+# ── 一時ファイル ──
+tmp/
+*.csv
