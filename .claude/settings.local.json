@@ -6,7 +6,10 @@
       "Bash(npm uninstall *)",
       "Bash(npm audit *)",
       "Bash(npx tsc *)",
-      "Bash(node -e \"require\\('argon2'\\); console.log\\('ok'\\)\")"
+      "Bash(node -e \"require\\('argon2'\\); console.log\\('ok'\\)\")",
+      "Read(//c/Users/h-bekal/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/skills/compress/**)",
+      "Bash(python3 -m scripts \"C:\\\\Users\\\\h-bekal\\\\Videos\\\\Ringo\\\\CLAUDE.md\")",
+      "Bash(py --version)"
     ]
   }
 }

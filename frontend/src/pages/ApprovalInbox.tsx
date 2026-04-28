@@ -1,8 +1,24 @@
 import { useState } from 'react';
-import { useApprovalInbox, useApproveAction, useApplication, InboxItem } from '../hooks/useApplication';
+import { useSearchParams, Link } from 'react-router-dom';
+import {
+  useApprovalInbox,
+  useApprovalHistory,
+  useWaitingApprovals,
+  useApproveAction,
+  useApplication,
+  InboxItem,
+} from '../hooks/useApplication';
 import Modal from '../components/common/Modal';
 import ApprovalTimeline from '../components/workflow/ApprovalTimeline';
 import Header from '../components/common/Header';
+
+const STEP_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  PENDING:  { label: '承認待ち', color: 'bg-yellow-100 text-yellow-800' },
+  APPROVED: { label: '承認済み', color: 'bg-emerald-100 text-emerald-800' },
+  REJECTED: { label: '却下',     color: 'bg-red-100 text-red-800' },
+  RETURNED: { label: '差戻し',   color: 'bg-orange-100 text-orange-800' },
+  WAITING:  { label: '待機中',   color: 'bg-gray-100 text-gray-600' },
+};
 
 // ── Category definitions ──────────────────────────────────────────────────────
 
@@ -126,8 +142,53 @@ function FieldList({ data }: { data: Record<string, unknown> }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+// ── Simple list for history / waiting views ───────────────────────────────────
+
+function SimpleItemList({ items, emptyText }: { items: InboxItem[]; emptyText: string }) {
+  if (items.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-warm-200 py-16 text-center text-sm text-gray-400">
+        {emptyText}
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {items.map((item) => {
+        const cfg = STEP_STATUS_CONFIG[item.step_status] ?? { label: item.step_status, color: 'bg-gray-100 text-gray-500' };
+        return (
+          <Link
+            key={`${item.id}-${item.step_order}`}
+            to={`/applications/${item.id}`}
+            className="bg-white border border-warm-200 rounded-xl p-4 flex items-center justify-between gap-4 hover:shadow-sm transition-all block"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono text-xs text-gray-400">{item.application_number}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${cfg.color}`}>{cfg.label}</span>
+                <span className="text-xs text-gray-300">ステップ {item.step_order}</span>
+              </div>
+              <p className="text-sm font-semibold text-gray-800 mt-1 truncate">{item.template_title}</p>
+              <p className="text-xs text-gray-400 mt-0.5">申請者: {item.applicant_name}</p>
+            </div>
+            <span className="text-xs text-brand-600 flex-shrink-0">詳細 →</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export default function ApprovalInbox() {
-  const { data: items, isLoading } = useApprovalInbox();
+  const [searchParams] = useSearchParams();
+  const view = searchParams.get('view'); // 'all' | 'waiting' | null (default = inbox)
+
+  const { data: inboxItems, isLoading: inboxLoading } = useApprovalInbox();
+  const { data: historyItems, isLoading: historyLoading } = useApprovalHistory();
+  const { data: waitingItems, isLoading: waitingLoading } = useWaitingApprovals();
+
   const actionMutation = useApproveAction();
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('shonin');
@@ -137,6 +198,7 @@ export default function ApprovalInbox() {
 
   const { data: detail } = useApplication(selectedItem?.id ?? '');
 
+  const items = inboxItems;
   const pendingCount = items?.filter((i) => i.step_status === 'PENDING').length ?? 0;
 
   const activeCat = CATEGORIES.find((c) => c.key === selectedCategory)!;
@@ -160,14 +222,40 @@ export default function ApprovalInbox() {
     setComment('');
   }
 
-  if (isLoading) {
+  // ── 全ての承認 view ──
+  if (view === 'all') {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <Header title="全ての承認" subtitle={`${historyItems?.length ?? 0}件`} />
+        {historyLoading
+          ? <div className="text-gray-400 py-12 text-center">読み込み中...</div>
+          : <SimpleItemList items={historyItems ?? []} emptyText="承認履歴はまだありません。" />
+        }
+      </div>
+    );
+  }
+
+  // ── 作業予定 view ──
+  if (view === 'waiting') {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <Header title="作業予定" subtitle="承認チェーンの後続ステップ（現在待機中）" />
+        {waitingLoading
+          ? <div className="text-gray-400 py-12 text-center">読み込み中...</div>
+          : <SimpleItemList items={waitingItems ?? []} emptyText="作業予定はありません。" />
+        }
+      </div>
+    );
+  }
+
+  if (inboxLoading) {
     return <div className="text-gray-400 py-12 text-center">読み込み中...</div>;
   }
 
   return (
     <div className="max-w-4xl mx-auto">
       <Header
-        title="承認受信箱"
+        title="承認予定"
         subtitle={`${pendingCount}件 承認待ち`}
       />
 

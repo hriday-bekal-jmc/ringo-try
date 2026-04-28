@@ -1,6 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useMyApplications } from '../hooks/useApplication';
 import Header from '../components/common/Header';
+
+const RESULT_STATUSES = ['APPROVED', 'REJECTED', 'SETTLED', 'PENDING_SETTLEMENT'];
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   DRAFT:              { label: '下書き',      color: 'bg-gray-100 text-gray-600' },
@@ -19,18 +21,24 @@ function ctaFor(status: string): { label: string; style: string } {
 }
 
 export default function MyApplications() {
+  const [searchParams] = useSearchParams();
+  const isResultsView = searchParams.get('view') === 'results';
   const { data: applications, isLoading } = useMyApplications();
 
-  const drafts  = (applications ?? []).filter((a) => a.status === 'DRAFT');
-  const others  = (applications ?? []).filter((a) => a.status !== 'DRAFT');
+  const all = applications ?? [];
+  const visible = isResultsView
+    ? all.filter((a) => RESULT_STATUSES.includes(a.status))
+    : all;
+  const drafts = isResultsView ? [] : visible.filter((a) => a.status === 'DRAFT');
+  const others = isResultsView ? visible : visible.filter((a) => a.status !== 'DRAFT');
 
   if (isLoading) return <div className="text-gray-400 py-12 text-center">読み込み中...</div>;
 
   return (
     <div className="max-w-4xl mx-auto">
       <Header
-        title="申請履歴"
-        subtitle={`${applications?.length ?? 0}件`}
+        title={isResultsView ? '申請結果' : '全ての申請'}
+        subtitle={`${visible.length}件`}
         action={
           <Link to="/" className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-semibold">
             新規申請

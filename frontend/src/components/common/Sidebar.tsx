@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApprovalInbox } from '../../hooks/useApplication';
 import RingoLogo from './RingoLogo';
@@ -14,10 +14,18 @@ function IconGrid() {
   );
 }
 
-function IconClock() {
+function IconList() {
   return (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0">
-      <circle cx="10" cy="10" r="8"/><polyline points="10 5 10 10 13.5 12"/>
+      <line x1="4" y1="5" x2="16" y2="5"/><line x1="4" y1="10" x2="16" y2="10"/><line x1="4" y1="15" x2="16" y2="15"/>
+    </svg>
+  );
+}
+
+function IconCheck() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0">
+      <polyline points="4 10 8 14 16 6"/>
     </svg>
   );
 }
@@ -27,6 +35,23 @@ function IconBell() {
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0">
       <path d="M15 7A5 5 0 0 0 5 7c0 5.5-2.5 7-2.5 7h15s-2.5-1.5-2.5-7"/>
       <path d="M11.4 17a1.5 1.5 0 0 1-2.8 0"/>
+    </svg>
+  );
+}
+
+function IconHistory() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0">
+      <polyline points="1 4 1 10 7 10"/>
+      <path d="M3.5 15a8 8 0 1 0 .5-8.5L1 10"/>
+    </svg>
+  );
+}
+
+function IconClock() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0">
+      <circle cx="10" cy="10" r="8"/><polyline points="10 5 10 10 13.5 12"/>
     </svg>
   );
 }
@@ -49,27 +74,69 @@ function IconSettings() {
   );
 }
 
-// ── Nav config ────────────────────────────────────────────────────────────────
+// ── NavItem helpers ───────────────────────────────────────────────────────────
 
-const NAV = [
-  { to: '/',             label: 'ダッシュボード', roles: null,                                          Icon: IconGrid },
-  { to: '/applications', label: '申請履歴',       roles: null,                                          Icon: IconClock },
-  { to: '/inbox',        label: '承認受信箱',     roles: ['MANAGER', 'GM', 'PRESIDENT', 'ADMIN'],       Icon: IconBell },
-  { to: '/accounting',   label: '経理・精算',     roles: ['ACCOUNTING', 'ADMIN'],                       Icon: IconCurrency },
-  { to: '/admin',        label: '管理者設定',     roles: ['ADMIN'],                                     Icon: IconSettings },
-];
+interface NavItemProps {
+  to: string;
+  label: string;
+  Icon: React.FC;
+  exact?: boolean;
+  badge?: number;
+  /** Match by pathname + optional search param check */
+  matchSearch?: string;
+}
+
+function NavItem({ to, label, Icon, exact, badge, matchSearch }: NavItemProps) {
+  const location = useLocation();
+
+  const isActive = matchSearch
+    ? location.pathname === to.split('?')[0] && location.search.includes(matchSearch)
+    : exact
+    ? location.pathname === to
+    : location.pathname.startsWith(to) && !location.search; // default: active if path matches and no search params
+
+  return (
+    <NavLink
+      to={to}
+      className={() =>
+        `flex items-center gap-2.5 px-3 py-2 rounded text-sm transition-colors ${
+          isActive ? 'bg-white/20 font-semibold' : 'hover:bg-white/10'
+        }`
+      }
+    >
+      <Icon />
+      <span className="flex-1">{label}</span>
+      {badge != null && badge > 0 && (
+        <span className="text-xs bg-brand-400 text-white font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
+    </NavLink>
+  );
+}
+
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <p className="px-3 pt-4 pb-1 text-[10px] font-bold tracking-widest text-white/40 uppercase">
+      {label}
+    </p>
+  );
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const { data: inbox } = useApprovalInbox();
 
   const pendingCount = inbox?.filter((i) => i.step_status === 'PENDING').length ?? 0;
-  const canSeeInbox = user && ['MANAGER', 'GM', 'PRESIDENT', 'ADMIN'].includes(user.role);
-
-  const visible = NAV.filter((n) => !n.roles || (user && n.roles.includes(user.role)));
+  const isApprover = user && ['MANAGER', 'GM', 'PRESIDENT', 'ADMIN'].includes(user.role);
+  const isAccounting = user && ['ACCOUNTING', 'ADMIN'].includes(user.role);
+  const isAdmin = user?.role === 'ADMIN';
 
   return (
     <aside className="w-56 flex-shrink-0 bg-brand-900 text-white flex flex-col min-h-screen">
+      {/* Logo */}
       <div className="px-5 py-4 border-b border-white/10 flex items-center gap-3">
         <RingoLogo size={28} color="white" />
         <div>
@@ -78,29 +145,64 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 py-4 space-y-0.5 px-3">
-        {visible.map((n) => (
-          <NavLink
-            key={n.to}
-            to={n.to}
-            end={n.to === '/'}
-            className={({ isActive }) =>
-              `flex items-center gap-2.5 px-3 py-2 rounded text-sm transition-colors ${
-                isActive ? 'bg-white/20 font-semibold' : 'hover:bg-white/10'
-              }`
-            }
-          >
-            <n.Icon />
-            <span className="flex-1">{n.label}</span>
-            {n.to === '/inbox' && canSeeInbox && pendingCount > 0 && (
-              <span className="text-xs bg-brand-400 text-white font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                {pendingCount > 99 ? '99+' : pendingCount}
-              </span>
-            )}
-          </NavLink>
-        ))}
+      <nav className="flex-1 py-2 px-3 overflow-y-auto">
+        {/* Dashboard */}
+        <NavItem to="/" label="ダッシュボード" Icon={IconGrid} exact />
+
+        {/* 申請 section */}
+        <SectionLabel label="申請" />
+        <NavItem to="/applications" label="全ての申請" Icon={IconList} exact />
+        <NavItem
+          to="/applications?view=results"
+          label="申請結果"
+          Icon={IconCheck}
+          matchSearch="view=results"
+        />
+
+        {/* 承認 section — approver roles only */}
+        {isApprover && (
+          <>
+            <SectionLabel label="承認" />
+            <NavItem
+              to="/inbox?view=all"
+              label="全ての承認"
+              Icon={IconHistory}
+              matchSearch="view=all"
+            />
+            <NavItem
+              to="/inbox"
+              label="承認予定"
+              Icon={IconBell}
+              exact
+              badge={pendingCount}
+            />
+            <NavItem
+              to="/inbox?view=waiting"
+              label="作業予定"
+              Icon={IconClock}
+              matchSearch="view=waiting"
+            />
+          </>
+        )}
+
+        {/* 経理 section */}
+        {isAccounting && (
+          <>
+            <SectionLabel label="経理" />
+            <NavItem to="/accounting" label="経理・精算" Icon={IconCurrency} />
+          </>
+        )}
+
+        {/* 管理 section */}
+        {isAdmin && (
+          <>
+            <SectionLabel label="管理" />
+            <NavItem to="/admin" label="管理者設定" Icon={IconSettings} />
+          </>
+        )}
       </nav>
 
+      {/* User footer */}
       <div className="px-5 py-4 border-t border-white/10 text-xs text-white/60">
         <p className="font-medium text-white/80 truncate">{user?.full_name}</p>
         <p className="truncate">{user?.email}</p>

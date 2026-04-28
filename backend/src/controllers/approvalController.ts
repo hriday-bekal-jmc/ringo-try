@@ -11,6 +11,52 @@ const ActionSchema = z.object({
 });
 
 export const ApprovalController = {
+  /** Full approval history for the current user — all statuses. */
+  async history(req: Request, res: Response): Promise<void> {
+    const { userId } = req.user!;
+
+    const result = await query(
+      `SELECT
+         a.id, a.application_number, a.status, a.created_at,
+         ft.title AS template_title,
+         u.full_name AS applicant_name,
+         s.step_order, s.created_at AS step_created_at,
+         s.status AS step_status, s.comments, s.action_at
+       FROM approval_steps s
+       JOIN applications a ON a.id = s.application_id
+       JOIN form_templates ft ON ft.id = a.template_id
+       JOIN users u ON u.id = a.applicant_id
+       WHERE s.approver_id = $1
+       ORDER BY s.action_at DESC NULLS LAST, s.created_at DESC`,
+      [userId]
+    );
+
+    res.json(result.rows);
+  },
+
+  /** WAITING steps assigned to current user — will activate when earlier steps complete. */
+  async waiting(req: Request, res: Response): Promise<void> {
+    const { userId } = req.user!;
+
+    const result = await query(
+      `SELECT
+         a.id, a.application_number, a.status, a.created_at,
+         ft.title AS template_title,
+         u.full_name AS applicant_name,
+         s.step_order, s.created_at AS step_created_at,
+         s.status AS step_status
+       FROM approval_steps s
+       JOIN applications a ON a.id = s.application_id
+       JOIN form_templates ft ON ft.id = a.template_id
+       JOIN users u ON u.id = a.applicant_id
+       WHERE s.approver_id = $1 AND s.status = 'WAITING'
+       ORDER BY s.step_order ASC, a.created_at ASC`,
+      [userId]
+    );
+
+    res.json(result.rows);
+  },
+
   /** Returns PENDING + RETURNED approval steps for the current user. */
   async inbox(req: Request, res: Response): Promise<void> {
     const { userId } = req.user!;

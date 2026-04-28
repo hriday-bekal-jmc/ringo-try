@@ -17,8 +17,10 @@ router.put('/:id', ApplicationController.update);
 router.post('/:id/submit', ApplicationController.submitDraft);
 router.post('/:id/resubmit', ApplicationController.resubmit);
 
-// Approvals (inbox)
-router.get('/approvals/inbox', requireRole(...APPROVER_ROLES), ApprovalController.inbox);
+// Approvals
+router.get('/approvals/inbox',   requireRole(...APPROVER_ROLES), ApprovalController.inbox);
+router.get('/approvals/history', requireRole(...APPROVER_ROLES), ApprovalController.history);
+router.get('/approvals/waiting', requireRole(...APPROVER_ROLES), ApprovalController.waiting);
 router.post('/approvals/:id/action', requireRole(...APPROVER_ROLES), ApprovalController.takeAction);
 
 export default router;

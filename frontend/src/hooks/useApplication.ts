@@ -85,6 +85,16 @@ export interface InboxItem {
   created_at: string;
 }
 
+export interface Receipt {
+  id: string;
+  receipt_number: string;
+  receipt_amount: number;
+  receipt_date: string;
+  vendor_name: string | null;
+  drive_file_id: string;
+  created_at: string;
+}
+
 export interface Settlement {
   id: string;
   application_number: string;
@@ -95,6 +105,11 @@ export interface Settlement {
   currency: string;
   status: string;
   settled_at: string | null;
+}
+
+export interface SettlementDetail extends Settlement {
+  form_data: Record<string, unknown>;
+  receipts: Receipt[];
 }
 
 // ── Hooks ──────────────────────────────────────────────────────────────────
@@ -285,6 +300,28 @@ export function useApprovalInbox() {
   });
 }
 
+export function useApprovalHistory() {
+  return useQuery<InboxItem[]>({
+    queryKey: ['approvals', 'history'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<InboxItem[]>('/api/applications/approvals/history');
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useWaitingApprovals() {
+  return useQuery<InboxItem[]>({
+    queryKey: ['approvals', 'waiting'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<InboxItem[]>('/api/applications/approvals/waiting');
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useApproveAction() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -340,5 +377,72 @@ export function useExportStatus() {
       return data as { ready: boolean; fileName?: string; rows?: number };
     },
     refetchInterval: (query) => (query.state.data?.ready ? false : 10_000),
+  });
+}
+
+export function useSettlementDetail(id: string | null) {
+  return useQuery<SettlementDetail>({
+    queryKey: ['settlements', id],
+    queryFn: async () => {
+      const { data } = await apiClient.get<SettlementDetail>(`/api/settlements/${id}`);
+      return data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useAttachReceipt() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      settlementId,
+      receiptAmount,
+      receiptDate,
+      vendorName,
+      driveFileId,
+    }: {
+      settlementId: string;
+      receiptAmount: number;
+      receiptDate: string;
+      vendorName?: string;
+      driveFileId: string;
+    }) => {
+      const { data } = await apiClient.post(`/api/settlements/${settlementId}/receipts`, {
+        receiptAmount,
+        receiptDate,
+        vendorName,
+        driveFileId,
+      });
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['settlements', variables.settlementId] });
+      queryClient.invalidateQueries({ queryKey: ['settlements'] });
+    },
+  });
+}
+
+export function useMarkSettled() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (settlementId: string) => {
+      const { data } = await apiClient.post(`/api/settlements/${settlementId}/settle`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settlements'] });
+    },
+  });
+}
+
+export function useGetUploadUrl() {
+  return useMutation({
+    mutationFn: async ({ fileName, mimeType }: { fileName: string; mimeType: string }) => {
+      const { data } = await apiClient.post<{ uploadUrl: string }>('/api/settlements/upload-url', {
+        fileName,
+        mimeType,
+      });
+      return data;
+    },
   });
 }

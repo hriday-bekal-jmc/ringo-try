@@ -32,33 +32,39 @@ BEGIN
 END;
 $$;
 
--- ── Step 3: Reformat any existing test rows ───────────────────────────────────
--- Assigns 2026-00001, 2026-00002, ... ordered by created_at.
+-- ── Step 3: Reformat any existing rows ───────────────────────────────────────
+-- Groups rows by their actual creation year, assigns per-year sequential numbers.
 -- Safe to run on an empty table (the CTE produces zero rows).
 
 DO $$
 DECLARE
-  row_count INT;
+  r RECORD;
 BEGIN
-  SELECT COUNT(*) INTO row_count FROM applications;
+  -- Rewrite each row using its actual creation year and per-year row number
+  WITH numbered AS (
+    SELECT id,
+           EXTRACT(YEAR FROM created_at)::INT AS yr,
+           ROW_NUMBER() OVER (
+             PARTITION BY EXTRACT(YEAR FROM created_at)::INT
+             ORDER BY created_at
+           ) AS rn
+    FROM applications
+  )
+  UPDATE applications
+  SET application_number = numbered.yr::TEXT || '-' || LPAD(numbered.rn::TEXT, 5, '0')
+  FROM numbered
+  WHERE applications.id = numbered.id;
 
-  IF row_count > 0 THEN
-    -- Rewrite existing application_number values with the new format
-    WITH numbered AS (
-      SELECT id,
-             ROW_NUMBER() OVER (ORDER BY created_at) AS rn
-      FROM applications
-    )
-    UPDATE applications
-    SET application_number = '2026-' || LPAD(numbered.rn::TEXT, 5, '0')
-    FROM numbered
-    WHERE applications.id = numbered.id;
-
-    -- Seed the counter so the next INSERT continues from where we left off
+  -- Seed the per-year counter for each year found in existing rows
+  FOR r IN
+    SELECT EXTRACT(YEAR FROM created_at)::INT AS yr, COUNT(*) AS cnt
+    FROM applications
+    GROUP BY yr
+  LOOP
     INSERT INTO application_year_seq (year, seq)
-    VALUES (2026, row_count)
-    ON CONFLICT (year) DO UPDATE SET seq = row_count;
-  END IF;
+    VALUES (r.yr, r.cnt)
+    ON CONFLICT (year) DO UPDATE SET seq = r.cnt;
+  END LOOP;
 END;
 $$;
 

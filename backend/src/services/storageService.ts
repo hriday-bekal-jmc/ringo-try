@@ -15,26 +15,20 @@ export const StorageService = {
     const drive = getDriveClient();
     const targetFolderId = folderId ?? process.env.GDRIVE_FOLDER_ID ?? '';
 
-    const res = await drive.files.create(
+    const res = await (drive.files.create as Function)(
       {
         requestBody: {
           name: fileName,
           parents: targetFolderId ? [targetFolderId] : undefined,
         },
-        media: {
-          mimeType,
-        },
+        media: { mimeType },
         uploadType: 'resumable',
         fields: 'id',
-      } as Parameters<typeof drive.files.create>[0],
-      {
-        // Return the resumable upload URI
-        onUploadProgress: () => {},
-      }
-    );
+      },
+      { onUploadProgress: () => {} }
+    ) as { config?: { url?: string } };
 
-    const uploadUrl = (res as { config?: { url?: string } }).config?.url ?? '';
-    return uploadUrl;
+    return res.config?.url ?? '';
   },
 
   /** Deletes a file from Google Drive by its file ID. */

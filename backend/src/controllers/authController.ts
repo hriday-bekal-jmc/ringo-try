@@ -12,9 +12,8 @@ const COOKIE_OPTIONS = {
 };
 
 function issueToken(res: Response, payload: object): void {
-  const token = jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_EXPIRES_IN ?? '8h',
-  });
+  const expiresIn = (process.env.JWT_EXPIRES_IN ?? '8h') as `${number}${'s'|'m'|'h'|'d'|'w'|'y'}`;
+  const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn });
   res.cookie('token', token, COOKIE_OPTIONS);
 }
 
