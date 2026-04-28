@@ -45,7 +45,7 @@ BEGIN
          (SELECT id FROM workflow_patterns WHERE pattern_code = 'PATTERN_1'),
          '伺書',
          'Inquiry',
-         '{"template_name":"Inquiry (Ukagai)","fields":[{"name":"subject","label":"件名","type":"text","required":true},{"name":"body","label":"内容","type":"textarea","required":true},{"name":"target_date","label":"実施予定日","type":"date","required":false},{"name":"reason","label":"理由・背景","type":"textarea","required":true},{"name":"decision_level","label":"決裁区分","type":"select","required":true,"options":["GM決裁","社長決裁"]}],"validations":[]}'::jsonb
+         '{"template_name":"Inquiry (Ukagai)","fields":[{"name":"subject","label":"件名","type":"text","required":true},{"name":"body","label":"内容","type":"textarea","required":true},{"name":"target_date","label":"実施予定日","type":"date","required":false},{"name":"reason","label":"理由・背景","type":"textarea","required":true},{"name":"decision_level","label":"決裁区分","type":"select","required":true,"options":["GM決裁","社長決裁"]},{"name":"attachments","label":"添付ファイル","type":"file","required":false,"multiple":true}],"validations":[]}'::jsonb
   WHERE NOT EXISTS (SELECT 1 FROM form_templates WHERE id = v_id);
 
   INSERT INTO template_permissions (template_id, department_id, access_level) VALUES
@@ -65,7 +65,7 @@ BEGIN
          (SELECT id FROM workflow_patterns WHERE pattern_code = 'PATTERN_1'),
          '在宅勤務・休暇申請',
          'Leave & Remote Work Request',
-         '{"template_name":"Leave / Remote Work","fields":[{"name":"request_type","label":"申請区分","type":"select","required":true,"options":["有給休暇","代休","特別休暇","欠勤","遅刻・早退","在宅勤務"]},{"name":"start_date","label":"開始日","type":"date","required":true},{"name":"end_date","label":"終了日","type":"date","required":true},{"name":"start_time","label":"開始時刻 (遅刻・在宅の場合)","type":"text","required":false},{"name":"end_time","label":"終了時刻 (早退の場合)","type":"text","required":false},{"name":"reason","label":"理由","type":"textarea","required":false}],"validations":[{"rule":"end_date >= start_date","message":"終了日は開始日以降にしてください"}]}'::jsonb
+         '{"template_name":"Leave / Remote Work","fields":[{"name":"request_type","label":"申請区分","type":"select","required":true,"options":["有給休暇","代休","特別休暇","欠勤","遅刻・早退","在宅勤務"]},{"name":"start_date","label":"開始日","type":"date","required":true},{"name":"end_date","label":"終了日","type":"date","required":true},{"name":"start_time","label":"開始時刻 (遅刻・在宅の場合)","type":"text","required":false},{"name":"end_time","label":"終了時刻 (早退の場合)","type":"text","required":false},{"name":"reason","label":"理由","type":"textarea","required":false},{"name":"attachments","label":"添付ファイル（診断書など）","type":"file","required":false,"multiple":true}],"validations":[{"rule":"end_date >= start_date","message":"終了日は開始日以降にしてください"}]}'::jsonb
   WHERE NOT EXISTS (SELECT 1 FROM form_templates WHERE id = v_id);
 
   INSERT INTO template_permissions (template_id, department_id, access_level) VALUES
@@ -125,7 +125,7 @@ BEGIN
          (SELECT id FROM workflow_patterns WHERE pattern_code = 'PATTERN_1'),
          '健康保険・厚生年金保険被扶養者（異動）届',
          'Health Insurance Dependent Change',
-         '{"template_name":"Dependent Change","fields":[{"name":"change_type","label":"異動区分","type":"select","required":true,"options":["被扶養者追加","被扶養者削除","氏名変更"]},{"name":"dependent_name","label":"被扶養者氏名","type":"text","required":true},{"name":"relationship","label":"続柄","type":"text","required":true},{"name":"birth_date","label":"生年月日","type":"date","required":true},{"name":"effective_date","label":"異動年月日","type":"date","required":true},{"name":"reason","label":"理由","type":"textarea","required":false}],"validations":[]}'::jsonb
+         '{"template_name":"Dependent Change","fields":[{"name":"change_type","label":"異動区分","type":"select","required":true,"options":["被扶養者追加","被扶養者削除","氏名変更"]},{"name":"dependent_name","label":"被扶養者氏名","type":"text","required":true},{"name":"relationship","label":"続柄","type":"text","required":true},{"name":"birth_date","label":"生年月日","type":"date","required":true},{"name":"effective_date","label":"異動年月日","type":"date","required":true},{"name":"reason","label":"理由","type":"textarea","required":false},{"name":"supporting_docs","label":"添付書類（戸籍謄本・住民票など）","type":"file","required":true,"multiple":true}],"validations":[]}'::jsonb
   WHERE NOT EXISTS (SELECT 1 FROM form_templates WHERE id = v_id);
 
   INSERT INTO template_permissions (template_id, department_id, access_level) VALUES
@@ -145,7 +145,7 @@ BEGIN
          (SELECT id FROM workflow_patterns WHERE pattern_code = 'PATTERN_1'),
          '休職・復職届',
          'Leave of Absence / Return to Work',
-         '{"template_name":"Leave of Absence","fields":[{"name":"request_type","label":"申請区分","type":"select","required":true,"options":["休職","復職"]},{"name":"start_date","label":"開始日","type":"date","required":true},{"name":"end_date","label":"終了予定日","type":"date","required":false},{"name":"reason","label":"理由","type":"textarea","required":true}],"validations":[]}'::jsonb
+         '{"template_name":"Leave of Absence","fields":[{"name":"request_type","label":"申請区分","type":"select","required":true,"options":["休職","復職"]},{"name":"start_date","label":"開始日","type":"date","required":true},{"name":"end_date","label":"終了予定日","type":"date","required":false},{"name":"reason","label":"理由","type":"textarea","required":true},{"name":"medical_certificate","label":"診断書","type":"file","required":false,"multiple":false}],"validations":[]}'::jsonb
   WHERE NOT EXISTS (SELECT 1 FROM form_templates WHERE id = v_id);
 
   INSERT INTO template_permissions (template_id, department_id, access_level) VALUES
@@ -185,7 +185,7 @@ BEGIN
          (SELECT id FROM workflow_patterns WHERE pattern_code = 'PATTERN_1'),
          '備品・名刺・封筒・パンフ・ゴム印発注',
          'Supplies & Print Order',
-         '{"template_name":"Supplies Order","fields":[{"name":"item_type","label":"品目種別","type":"select","required":true,"options":["備品","名刺","封筒","パンフレット","ゴム印","その他"]},{"name":"item_name","label":"品名・仕様","type":"text","required":true},{"name":"quantity","label":"数量","type":"text","required":true},{"name":"delivery_date","label":"希望納期","type":"date","required":false},{"name":"reason","label":"使用目的","type":"textarea","required":true}],"validations":[]}'::jsonb
+         '{"template_name":"Supplies Order","fields":[{"name":"item_type","label":"品目種別","type":"select","required":true,"options":["備品","名刺","封筒","パンフレット","ゴム印","その他"]},{"name":"item_name","label":"品名・仕様","type":"text","required":true},{"name":"quantity","label":"数量","type":"text","required":true},{"name":"delivery_date","label":"希望納期","type":"date","required":false},{"name":"reason","label":"使用目的","type":"textarea","required":true},{"name":"attachments","label":"添付資料（見積書など）","type":"file","required":false,"multiple":true}],"validations":[]}'::jsonb
   WHERE NOT EXISTS (SELECT 1 FROM form_templates WHERE id = v_id);
 
   INSERT INTO template_permissions (template_id, department_id, access_level) VALUES
@@ -225,7 +225,7 @@ BEGIN
          (SELECT id FROM workflow_patterns WHERE pattern_code = 'PATTERN_3'),
          '通勤交通費精算書',
          'Commuting Expense Claim',
-         '{"template_name":"Commuting Expense","fields":[{"name":"period_from","label":"精算期間 (開始)","type":"date","required":true},{"name":"period_to","label":"精算期間 (終了)","type":"date","required":true},{"name":"route","label":"経路","type":"text","required":true},{"name":"monthly_fare","label":"月額定期代 (円)","type":"text","required":true},{"name":"total_amount","label":"精算金額合計 (円)","type":"text","required":true}],"validations":[{"rule":"period_to >= period_from","message":"終了日は開始日以降にしてください"}]}'::jsonb
+         '{"template_name":"Commuting Expense","fields":[{"name":"period_from","label":"精算期間 (開始)","type":"date","required":true},{"name":"period_to","label":"精算期間 (終了)","type":"date","required":true},{"name":"route","label":"経路","type":"text","required":true},{"name":"monthly_fare","label":"月額定期代 (円)","type":"text","required":true},{"name":"total_amount","label":"精算金額合計 (円)","type":"text","required":true},{"name":"commute_pass_scan","label":"定期券・申請書","type":"file","required":true,"multiple":false},{"name":"receipts","label":"領収書","type":"file","required":false,"multiple":true}],"validations":[{"rule":"period_to >= period_from","message":"終了日は開始日以降にしてください"}]}'::jsonb
   WHERE NOT EXISTS (SELECT 1 FROM form_templates WHERE id = v_id);
 
   INSERT INTO template_permissions (template_id, department_id, access_level) VALUES
@@ -245,7 +245,7 @@ BEGIN
          (SELECT id FROM workflow_patterns WHERE pattern_code = 'PATTERN_3'),
          '出張申請・精算書',
          'Business Trip Application',
-         '{"template_name":"Business Trip","fields":[{"name":"destination","label":"出張先","type":"text","required":true},{"name":"purpose","label":"目的","type":"textarea","required":true},{"name":"start_date","label":"出発日","type":"date","required":true},{"name":"end_date","label":"帰着日","type":"date","required":true},{"name":"transportation","label":"交通手段","type":"text","required":true},{"name":"accommodation","label":"宿泊先","type":"text","required":false},{"name":"estimated_cost","label":"概算費用 (円)","type":"text","required":true}],"validations":[{"rule":"end_date >= start_date","message":"帰着日は出発日以降にしてください"}]}'::jsonb
+         '{"template_name":"Business Trip","fields":[{"name":"destination","label":"出張先","type":"text","required":true},{"name":"purpose","label":"目的","type":"textarea","required":true},{"name":"start_date","label":"出発日","type":"date","required":true},{"name":"end_date","label":"帰着日","type":"date","required":true},{"name":"transportation","label":"交通手段","type":"text","required":true},{"name":"accommodation","label":"宿泊先","type":"text","required":false},{"name":"estimated_cost","label":"概算費用 (円)","type":"text","required":true},{"name":"receipts","label":"領収書・添付書類","type":"file","required":false,"multiple":true}],"validations":[{"rule":"end_date >= start_date","message":"帰着日は出発日以降にしてください"}]}'::jsonb
   WHERE NOT EXISTS (SELECT 1 FROM form_templates WHERE id = v_id);
 
   INSERT INTO template_permissions (template_id, department_id, access_level) VALUES
@@ -265,7 +265,7 @@ BEGIN
          (SELECT id FROM workflow_patterns WHERE pattern_code = 'PATTERN_3'),
          '経費精算書',
          'Expense Report',
-         '{"template_name":"Expense Report","fields":[{"name":"expense_date","label":"発生日","type":"date","required":true},{"name":"category","label":"費目","type":"select","required":true,"options":["交通費","宿泊費","接待費","消耗品費","通信費","その他"]},{"name":"description","label":"内容・詳細","type":"textarea","required":true},{"name":"amount","label":"金額 (円)","type":"text","required":true},{"name":"receipt_attached","label":"領収書添付","type":"select","required":true,"options":["あり","なし"]}],"validations":[]}'::jsonb
+         '{"template_name":"Expense Report","fields":[{"name":"expense_date","label":"発生日","type":"date","required":true},{"name":"category","label":"費目","type":"select","required":true,"options":["交通費","宿泊費","接待費","消耗品費","通信費","その他"]},{"name":"description","label":"内容・詳細","type":"textarea","required":true},{"name":"amount","label":"金額 (円)","type":"text","required":true},{"name":"receipt","label":"領収書","type":"file","required":true,"multiple":false}],"validations":[]}'::jsonb
   WHERE NOT EXISTS (SELECT 1 FROM form_templates WHERE id = v_id);
 
   INSERT INTO template_permissions (template_id, department_id, access_level) VALUES
@@ -285,7 +285,7 @@ BEGIN
          (SELECT id FROM workflow_patterns WHERE pattern_code = 'PATTERN_3'),
          '支払依頼書',
          'Payment Request',
-         '{"template_name":"Payment Request","fields":[{"name":"payee","label":"支払先","type":"text","required":true},{"name":"amount","label":"金額 (円)","type":"text","required":true},{"name":"due_date","label":"支払期日","type":"date","required":true},{"name":"purpose","label":"支払目的","type":"textarea","required":true},{"name":"bank_name","label":"金融機関名","type":"text","required":false},{"name":"bank_account","label":"口座番号","type":"text","required":false}],"validations":[]}'::jsonb
+         '{"template_name":"Payment Request","fields":[{"name":"payee","label":"支払先","type":"text","required":true},{"name":"amount","label":"金額 (円)","type":"text","required":true},{"name":"due_date","label":"支払期日","type":"date","required":true},{"name":"purpose","label":"支払目的","type":"textarea","required":true},{"name":"bank_name","label":"金融機関名","type":"text","required":false},{"name":"bank_account","label":"口座番号","type":"text","required":false},{"name":"attachments","label":"添付書類（請求書・見積書など）","type":"file","required":false,"multiple":true}],"validations":[]}'::jsonb
   WHERE NOT EXISTS (SELECT 1 FROM form_templates WHERE id = v_id);
 
   INSERT INTO template_permissions (template_id, department_id, access_level) VALUES

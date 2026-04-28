@@ -92,8 +92,8 @@ function NavItem({ to, label, Icon, exact, badge, matchSearch }: NavItemProps) {
   const isActive = matchSearch
     ? location.pathname === to.split('?')[0] && location.search.includes(matchSearch)
     : exact
-    ? location.pathname === to
-    : location.pathname.startsWith(to) && !location.search; // default: active if path matches and no search params
+    ? location.pathname === to && !location.search
+    : location.pathname.startsWith(to) && !location.search;
 
   return (
     <NavLink

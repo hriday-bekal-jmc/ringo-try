@@ -9,7 +9,9 @@
       "Bash(node -e \"require\\('argon2'\\); console.log\\('ok'\\)\")",
       "Read(//c/Users/h-bekal/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/skills/compress/**)",
       "Bash(python3 -m scripts \"C:\\\\Users\\\\h-bekal\\\\Videos\\\\Ringo\\\\CLAUDE.md\")",
-      "Bash(py --version)"
+      "Bash(py --version)",
+      "Read(//c//**)",
+      "Read(//c/Program Files/PostgreSQL/**)"
     ]
   }
 }

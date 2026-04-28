@@ -6,9 +6,10 @@ import apiClient from '../services/apiClient';
 export interface FieldDef {
   name: string;
   label: string;
-  type: 'text' | 'date' | 'textarea' | 'select';
+  type: 'text' | 'date' | 'textarea' | 'select' | 'file';
   required: boolean;
   options?: string[];
+  multiple?: boolean;
 }
 
 export interface ValidationRule {
